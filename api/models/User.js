@@ -32,7 +32,8 @@ const userSchema = mongoose.Schema(
     },
     address: String,
     intro: String,
-    Summary: String,
+    summary: String,
+    isActive: Boolean,
   },
   {
     timestamps: true,
