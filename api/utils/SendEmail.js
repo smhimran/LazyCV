@@ -1,25 +1,27 @@
 const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const createError = require("http-errors");
+const { base64encode } = require("nodejs-base64");
 
-const sendVerificationEmail = (user) => {
-  const token = jwt.sign(
-    {
-      name: user.name,
-      username: user.username,
-      email: user.email,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "3d",
-    }
-  );
+const Token = require("../models/Token");
+
+const sendVerificationEmail = async (user) => {
+  let token = await Token.findOne({ user: user._id });
+
+  if (!token) {
+    token = await new Token({
+      userId: user._id,
+      token: crypto.randomBytes(32).toString("hex"),
+    }).save();
+  }
+
+  const uid = base64encode(user.username);
 
   const html = `<p>Hello ${user.name}</p>
         <p>Thanks for signing up on ${process.env.APP_NAME}. Now before you login, you need to activate the account.</p>
         <p>To activate the account, please click the 'Activate' button below.</p>
         <div>
-            <a href="${process.env.APP_URL}/users/activate/${token}" style="background: #eb4034; padding: 10px 20px; font-size: 16px; color: #ffffff; text-decoration: none;">Activate</a>
+            <a href="${process.env.APP_URL}/users/activate/${uid}/${token.token}" style="background: #eb4034; padding: 10px 20px; font-size: 16px; color: #ffffff; text-decoration: none;">Activate</a>
         </div>
         <p>Thanks for using our site!</p>
         <p><b>The ${process.env.APP_NAME} Team</b></p>

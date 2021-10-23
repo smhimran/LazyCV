@@ -1243,6 +1243,11 @@ node-fetch@^2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
+nodejs-base64@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/nodejs-base64/-/nodejs-base64-2.0.0.tgz#6325842fef622c67d9203677dca29a73a893335a"
+  integrity sha512-rf83teAz8f251P+HQW0nZyIhIIKrTs8wz11n5+Dp1b+/oWCYSeCfNfbUqda5B0DhspBVXwJ7SPk8aghv/TFsjQ==
+
 nodemailer@^6.7.0:
   version "6.7.0"
   resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-6.7.0.tgz#86614722c4e0c33d1b5b02aecb90d6d629932b0d"
