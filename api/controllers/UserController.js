@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const { base64decode } = require("nodejs-base64");
+const jwt = require("jsonwebtoken");
 
 // models
 const User = require("../models/User");
@@ -93,7 +94,68 @@ const emailVerificationHandler = async (req, res) => {
   }
 };
 
+const userLoginHandler = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      $or: [{ username: req.body.username }, { email: req.body.username }],
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        messsage: "Unable to login with provided credentials!",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(req.body.password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        messsage: "Unable to login with provided credentials!",
+      });
+    }
+
+    if (user.isActive) {
+      const token = jwt.sign(
+        {
+          username: user.username,
+          userId: user._id,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          username: user.username,
+          userId: user._id,
+        },
+        process.env.REFRESH_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      return res.status(200).json({
+        message: "User logged in successfully!",
+        token,
+        refreshToken,
+      });
+    } else {
+      return res.status(401).json({
+        messsage: "User is not activated!",
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      error,
+    });
+  }
+};
+
 module.exports = {
   signupHandler,
   emailVerificationHandler,
+  userLoginHandler,
 };
