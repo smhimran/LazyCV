@@ -6,7 +6,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Token = require("../models/Token");
 
-const { sendVerificationEmail } = require("../utils/SendEmail");
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} = require("../utils/SendEmail");
 const { use } = require("../routes/User");
 
 const signupHandler = (req, res) => {
@@ -154,8 +157,82 @@ const userLoginHandler = async (req, res) => {
   }
 };
 
+const resetPasswordHandler = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      $or: [{ username: req.body.username }, { email: req.body.username }],
+    });
+
+    if (user) {
+      sendPasswordResetEmail(user);
+    }
+
+    res.status(200).json({
+      messsage: "Password reset link has been sent successfully!",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const resetPasswordVerificationHandler = async (req, res) => {
+  try {
+    const uid = base64decode(req.body.uid);
+    const token = req.body.token;
+    const newPassword = req.body.password;
+    const confirmPassword = req.body.confirmPassword;
+
+    if (newPassword !== confirmPassword) {
+      res.status(400).json({
+        messsage: "Passwords do not match!",
+      });
+    }
+
+    const user = await User.findOne({ username: uid });
+
+    if (!user) {
+      res.status(401).json({
+        messsage: "Password reset failed!",
+      });
+    }
+
+    const tokenFound = await Token.findOne({
+      user: uid,
+      token,
+    });
+
+    if (!tokenFound) {
+      res.status(401).json({
+        messsage: "Password reset failed!",
+      });
+    }
+
+    bcrypt.hash(newPassword, 10, async (err, hash) => {
+      if (err) {
+        res.status(500).json({
+          error,
+        });
+      } else {
+        user.password = hash;
+
+        await user.save();
+
+        await tokenFound.delete();
+
+        res.status(200).json({
+          messsage: "Password updated successfullY!",
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   signupHandler,
   emailVerificationHandler,
   userLoginHandler,
+  resetPasswordHandler,
+  resetPasswordVerificationHandler,
 };
