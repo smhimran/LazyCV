@@ -220,7 +220,7 @@ const resetPasswordVerificationHandler = async (req, res) => {
         await tokenFound.delete();
 
         res.status(200).json({
-          messsage: "Password updated successfullY!",
+          messsage: "Password updated successfully!",
         });
       }
     });
@@ -229,10 +229,51 @@ const resetPasswordVerificationHandler = async (req, res) => {
   }
 };
 
+const getAccessToken = (req, res) => {
+  const username = req.username;
+  const userId = req.userId;
+
+  jwt.sign(
+    {
+      username,
+      userId,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "1h",
+    },
+    (err, token) => {
+      if (err) {
+        req.status(500).json({
+          error: err,
+        });
+      } else {
+        res.status(200).json({
+          token,
+        });
+      }
+    }
+  );
+};
+
+const getCurrentUser = (req, res) => {
+  const userId = req.userId;
+
+  User.findOne({ _id: userId }, "-_id -password -__v")
+    .then((user) => {
+      res.status(200).json(user);
+    })
+    .catch((error) => {
+      res.status(500).json(error);
+    });
+};
+
 module.exports = {
   signupHandler,
   emailVerificationHandler,
   userLoginHandler,
   resetPasswordHandler,
   resetPasswordVerificationHandler,
+  getAccessToken,
+  getCurrentUser,
 };
